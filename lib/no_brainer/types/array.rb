@@ -14,24 +14,41 @@ module NoBrainer
       end
     end
 
-    def self.of(object_type = nil)
-      NoBrainer::TypedArray.of(object_type)
+    def self.of(object_type = nil, &object_type_proc)
+      NoBrainer::TypedArray.of(object_type, &object_type_proc)
     end
   end
   Document::Types::Array = Array
 
   class TypedArray < ::Array
-    def self.of(object_type)
-      return object_type.const_get('Array', !:inherited)  if object_type.const_defined?('Array', !:inherited)
-      klass = ::Class.new(TypedArray) do
-        define_singleton_method(:object_type) { object_type }
+    def self.of(object_type = nil, &object_type_proc)
+      if object_type.nil? == object_type_proc.nil?
+        raise ArgumentError, "Expected either Object or block"
       end
-      object_type.const_set('Array', klass)
+
+      if object_type
+        object_type = resolve_object_type(object_type)
+        ::Class.new(TypedArray) { define_singleton_method(:object_type) { object_type } }
+      else
+        # lazy-load object class
+        ::Class.new(TypedArray) { define_singleton_method(:object_type) { @object_type ||= resolve_object_type(object_type_proc) } }
+      end
     end
 
+    def self.resolve_object_type(type)
+      type = type.call  if type.respond_to?(:call)
+      if type.const_defined?('Array', !:inherited)
+        return type.const_get('Array', !:inherited)
+      end
+      type.const_set('Array', self)
+      type
+    end
+    private_class_method :resolve_object_type
+
     def self.nobrainer_cast_user_to_model(values)
+      cast_type = object_type.respond_to?(:nobrainer_cast_user_to_model) && object_type
       values = Array(values).map do |value|
-        value = object_type.nobrainer_cast_user_to_model(value)  if object_type.respond_to?(:nobrainer_cast_user_to_model)
+        value = cast_type.nobrainer_cast_user_to_model(value)  if cast_type
         unless value.is_a?(object_type)
           raise NoBrainer::Error::InvalidType, type: object_type.name, value: value
         end

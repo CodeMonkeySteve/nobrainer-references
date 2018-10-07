@@ -2,15 +2,32 @@ require 'no_brainer/document'
 
 module NoBrainer
   class Reference < SimpleDelegator
-    def self.to(model_type)
-      raise ArgumentError, "Expected NoBrainer::Document type, got #{model_type.inspect}"  unless model_type < Document
-      return model_type.const_get('Reference', !:inherit)  if model_type.const_defined?('Reference', !:inherit)
-
-      klass = ::Class.new(Reference) do
-        define_singleton_method(:model_type) { model_type }
+    def self.to(model_type = nil, &model_type_proc)
+      raise ArgumentError, "wrong number of arguments (given 2, expect 1)"  if model_type && model_type_proc
+      raise ArgumentError, "wrong number of arguments (given 0, expect 1)"  unless model_type || model_type_proc
+      if model_type.respond_to?(:call)
+        model_type_proc = model_type
+        model_type = nil
       end
-      model_type.const_set('Reference', klass)
+      if model_type
+        model_type = resolve_model_type(model_type)
+        ::Class.new(Reference) { define_singleton_method(:model_type) { model_type } }
+      else
+        # lazy-load model class
+        ::Class.new(Reference) { define_singleton_method(:model_type) { @model_type ||= resolve_model_type(model_type_proc) } }
+      end
     end
+
+    def self.resolve_model_type(type)
+      type = type.call  if type.respond_to?(:call)
+      if type.const_defined?('Reference', !:inherited)
+        return type.const_get('Reference', !:inherited)
+      end
+      raise TypeError, "Expected Document subclass, got #{type.inspect}"  unless type < Document
+      type.const_set('Reference', self)
+      type
+    end
+    private_class_method :resolve_model_type
 
     attr_reader :id
 
@@ -20,7 +37,17 @@ module NoBrainer
     end
 
     def __getobj__
-      super || __setobj__(self.class.model_type.find(id))
+      super do
+        if @id && (obj = self.class.model_type.find(@id))
+          __setobj__(obj)
+        elsif block_given?
+          yield
+        end
+      end
+    end
+
+    def __hasobj__
+      defined? @delegate_sd_obj
     end
 
     def self.nobrainer_cast_user_to_model(value)
