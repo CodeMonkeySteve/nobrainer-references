@@ -32,12 +32,30 @@ module NoBrainer
     end
     private_class_method :resolve_model_type
 
+    def self.name
+      str = "Reference"
+      str += "(#{model_type.name})"  if respond_to?(:model_type)
+      str
+    end
+
     attr_reader :id
 
     def initialize(id, object = nil)
       @id = id
-      __setobj__(object)
+      __setobj__(object)  unless object.nil?
     end
+
+    def inspect
+      "#<*#{self.class.model_type} " + (
+        __hasobj__ ? __getobj__.inspectable_attributes.map { |k,v| "#{k}: #{v.inspect}" }.join(', ')
+                   : "#{self.class.model_type.table_config.primary_key}: #{id.inspect}"
+      ) +  ">"
+    end
+
+    def dup
+      self.class.new(@id)
+    end
+    alias_method :deep_dup, :dup
 
     def __getobj__
       super do

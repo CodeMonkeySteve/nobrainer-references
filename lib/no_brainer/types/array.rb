@@ -45,6 +45,12 @@ module NoBrainer
     end
     private_class_method :resolve_object_type
 
+    def self.name
+      str = "Array"
+      str += "(#{object_type.name})"  if respond_to?(:object_type)
+      str
+    end
+
     def self.nobrainer_cast_user_to_model(values)
       cast_type = object_type.respond_to?(:nobrainer_cast_user_to_model) && object_type
       values = Array(values).map do |value|
