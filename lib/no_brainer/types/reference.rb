@@ -2,6 +2,9 @@ require 'no_brainer/document'
 
 module NoBrainer
   class Reference < SimpleDelegator
+    mattr_accessor :autosave
+    self.autosave = true
+
     def self.to(model_type = nil, &model_type_proc)
       raise ArgumentError, "wrong number of arguments (given 2, expect 1)"  if model_type && model_type_proc
       raise ArgumentError, "wrong number of arguments (given 0, expect 1)"  unless model_type || model_type_proc
@@ -65,6 +68,7 @@ module NoBrainer
     end
 
     def self.nobrainer_cast_model_to_db(value)
+      value.save!  if value.new_record? && self.autosave
       value.id
     end
 
