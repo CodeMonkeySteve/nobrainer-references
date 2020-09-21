@@ -21,18 +21,3 @@ RSpec.configure do |config|
     end
   end
 end
-
-# class ObjectSpy
-#   def initialize(obj)
-#     @_obj = obj
-#   end
-#
-#   def respond_to_missing?(method, private)
-#     @_obj.respond_to?(method)
-#   end
-#
-#   def method_missing(method, *args, &block)
-#     puts "#{@_obj}.#{method}(#{args.join(', ')})"
-#     @_obj.__send__(method, *args, &block)
-#   end
-# end

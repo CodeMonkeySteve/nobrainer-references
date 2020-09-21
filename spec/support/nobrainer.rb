@@ -59,12 +59,15 @@ NoBrainer.configure do |config|
   # otherwise Logger.new(STDERR) with a WARN level.
   # If the logger is configured with a DEBUG level,
   # then each database query is emitted.
-  # config.logger = config.default_logger
+  config.logger = config.default_logger
 
   # NoBrainer will colorize the queries if colorize_logger is true.
   # Specifically, NoBrainer will colorize management RQL queries in yellow,
   # write queries in red and read queries in green.
-  # config.colorize_logger = true
+  config.colorize_logger = false
+
+  config.logger.level = Logger::DEBUG
+  config.logger.formatter = ->(_severity, _time, _progname, msg) { msg + "\n" }
 
   # You probably do not want to use both NoBrainer and ActiveRecord in your
   # application. NoBrainer will emit a warning if you do so.

@@ -12,13 +12,19 @@ module NoBrainer
         model_type_proc = model_type
         model_type = nil
       end
-      if model_type
+
+      if model_type.const_defined?('Reference', !:inherited)
+        return model_type.const_get('Reference', !:inherited)
+      end
+
+      ref_type = if model_type
         model_type = resolve_model_type(model_type)
         ::Class.new(Reference) { define_singleton_method(:model_type) { model_type } }
       else
         # lazy-load model class
         ::Class.new(Reference) { define_singleton_method(:model_type) { @model_type ||= resolve_model_type(model_type_proc) } }
       end
+      model_type.const_set('Reference', ref_type)
     end
 
     def self.resolve_model_type(type)
@@ -26,8 +32,9 @@ module NoBrainer
       if type.const_defined?('Reference', !:inherited)
         return type.const_get('Reference', !:inherited)
       end
-      raise TypeError, "Expected Document subclass, got #{type.inspect}"  unless type < Document
-      type.const_set('Reference', self)
+      unless type < Document
+        raise TypeError, "Expected Document subclass, got #{type.inspect}"
+      end
       type
     end
     private_class_method :resolve_model_type

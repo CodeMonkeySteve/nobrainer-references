@@ -9,22 +9,34 @@ RSpec.describe NoBrainer::Reference do
 
     class Post
       include NoBrainer::Document
-      field :title, type: String
-      field :published, type: Boolean
-      field :authors, type: Array.of(Reference.to(Person))
-      field :publisher, type: Reference.to(Person)
+      field :title,     type: String
+      field :authors,   type: Array.of(Reference.to(Person)), store_as: :author_ids
+      field :publisher, type: Reference.to(Person),           store_as: :publisher_id
+      index :authors, multi: true
+      index :publisher
     end
+
+    NoBrainer.sync_schema
   end
 
   it "references one" do
     publisher = Person.create!(name: "Marvin")
     post = Post.create!(title: "Stuff", publisher: publisher)
-    expect(post.reload.publisher.name).to eq publisher.name
+
+    post.reload
+    expect(post.publisher.name).to eq publisher.name
+    expect(Post.where(publisher: publisher)).to eq [post]
   end
 
   it "references many" do
-    authors = [ Person.create!(name: "Bob"), Person.create!(name: "Doug") ]
-    post = Post.create!(title: "Stuff", authors: authors)
-    expect(post.reload.authors.map(&:name)).to eq authors.map(&:name)
+    bob, doug = Person.create!(name: "Bob"), Person.create!(name: "Doug")
+    bob_post = Post.create!(title: "Bob Stuff", authors: bob).reload
+    doug_post = Post.create!(title: "Doug Stuff", authors: doug).reload
+    bd_post = Post.create!(title: "Body & Doug Stuff", authors: [bob, doug]).reload
+    db_post = Post.create!(title: "Doug & Bob Stuff", authors: [doug, bob]).reload
+
+    expect(Post.where(:authors.any => bob)).to eq [bob_post, bd_post, db_post]
+    expect(Post.where(:authors.any => doug)).to eq [doug_post, bd_post, db_post]
+    expect(Post.where(:authors.any.in => [bob, doug])).to eq [bob_post, doug_post, bd_post, db_post]
   end
 end
