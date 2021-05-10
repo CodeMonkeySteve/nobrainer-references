@@ -87,18 +87,20 @@ module NoBrainer
           value
         when model_type
           new(value.id, value)
+        when nil
+          nil
         else
           raise NoBrainer::Error::InvalidType
       end
     end
 
     def self.nobrainer_cast_model_to_db(value)
-      value.save!  if value.new_record? && self.autosave
-      value.id
+      value&.save!  if value&.new_record? && self.autosave
+      value&.id
     end
 
     def self.nobrainer_cast_db_to_model(value)
-      new(value)
+      value && new(value)
     end
   end
 
