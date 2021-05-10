@@ -66,7 +66,14 @@ module NoBrainer
 
     def __getobj__
       super do
-        if @id && (obj = self.class.model_type.find(@id))
+        if @missing
+          nil
+        elsif @id
+          model = self.class.model_type
+          unless (obj = model.find?(@id))
+            @missing = true
+            raise NoBrainer::Error::MissingAttribute, "#{model} :#{model.pk_name}=>#{@id.inspect} not found"
+          end
           __setobj__(obj)
         elsif block_given?
           yield

@@ -10,8 +10,8 @@ RSpec.describe NoBrainer::Reference do
     class Post
       include NoBrainer::Document
       field :title,     type: String
-      field :authors,   type: Array.of(Reference.to(Person)), store_as: :author_ids
-      field :publisher, type: Reference.to(Person),           store_as: :publisher_id
+      field :authors,   type: Array.of(Reference.to(Person))
+      field :publisher, type: Reference.to(Person)
       index :authors, multi: true
       index :publisher
     end
@@ -38,5 +38,20 @@ RSpec.describe NoBrainer::Reference do
     expect(Post.where(:authors.any => bob)).to eq [bob_post, bd_post, db_post]
     expect(Post.where(:authors.any => doug)).to eq [doug_post, bd_post, db_post]
     expect(Post.where(:authors.any.in => [bob, doug])).to eq [bob_post, doug_post, bd_post, db_post]
+  end
+
+  it "exception when referenced item is missing" do
+    publisher = Person.create!(name: "Marvin")
+    post = Post.create!(title: "Stuff", publisher: publisher)
+
+    expect(post.publisher).to eq publisher
+    publisher.delete
+    post.reload
+    expect {
+      post.publisher
+    }.to raise_error(NoBrainer::Error::MissingAttribute)
+
+    post.publisher = nil
+    post.save!
   end
 end
