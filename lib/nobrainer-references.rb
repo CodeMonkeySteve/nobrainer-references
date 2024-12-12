@@ -8,6 +8,6 @@ module NoBrainer
   autoload :Array, :Reference
 
   module Document
-    autoload :References
+    include References
   end
 end
