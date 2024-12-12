@@ -15,50 +15,58 @@ Include in your Gemfile:
 ## Example
 
     class Publisher
-      include Mongoid::Document
+      include NoBrainer::Document
       field :name, type: String
     end
 
     class Person
-      include Mongoid::Document
+      include NoBrainer::Document
       field :name, type: String
     end
 
     class Book
-      include Mongoid::Document
+      include NoBrainer::Document
       field :title, type: String
-
-      references_one  :publisher
       references_many :authors, model: Person
-
-      # same as:
-      # field :publisher, type: Reference.to(Publisher),        store_as: 'publishder_id'
-      # field :authors,   type: Array.of(Reference.to(Person)), store_as: 'author_ids'
+      references_one  :publisher
     end
 
+    douglas_adams = Person.create!(name: "Douglas Adams")
+    john_lloyd = Person.create!(name: "John Lloyd")
+    publisher = Publisher.create!(name: "Pan Books")
+    book = Book.create!(
+      title: "The Meaning of Liff",
+      authors: [douglas_adams, john_lloyd],
+      publisher: publisher
+    )
 
-## Under The Hood
+    ...
 
-This gem adds a NoBrainer field type that's a `Reference` to a model of a particular type.  This type acts as a lazy-loading _delegator_, which serializes the referred object by its `id` when saving the model, and then later loads that object when it's accessed.
+    book = Book.where(title: "The Meaning of Liff").first
+    book.publisher.name         #=> "Pan Books"
+    book.authors.map(&:name)    #=> [ "Douglas Adams", "John Lloyd" ]
 
-    class Person
-      include Mongoid::Document
-      field :name, type: String
-    end
+## How It Works
 
-    class Book
-      include Mongoid::Document
-      field :title, type: String
-      field :publisher, type: Reference.to(Person)
-    end
+This gem adds a NoBrainer field type that's a `Reference` to a model of a particular type.  This type acts as a lazy-loading _delegator_, which serializes the referred object by its `id` when saving the model, and then later loads that object when it's dereferenced (or is eager-loaded).
 
-    editor = Person.create!(name: "Stephen Hawking")
-    book = Book.create!(title: "A Brief History of Time", author: author)
+`references_one` and `references_many` are convenience methods for creating fields with the correct types and default names according to convention: 
 
-    book.reload
-    book.editor.name # => "Stephen Hawking"
+    references_one  :publisher
+    # ... same as ...
+    field :publisher, type: Reference.to(Publisher), store_as: 'publishder_id'
 
-### One-to-many
+    references_many :authors, model: Person
+    # ... same as ...
+    field :authors, type: Array.of(Reference.to(Person)), store_as: 'author_ids'
 
-This gem also adds a `TypedArray` field type with proper serialization support and type checking.  This can be combined with the `Reference` type to 
+It also supports eager-loading of references:
 
+    book = Book.eager_load(:authors, :publisher).where(title: "The Meaning of Liff").first
+    book.authors(&:map)   #=> [ "Douglas Adams", "John Lloyd" ]
+
+## Future Plans
+
+* Add a `referenced_by` convenience method for tracking which other models/fields reference this one.  Provides parity with the ActiveRecord `belongs_to`/`has_many` inverse associations.  This would be installed automatically by the `references_one` and `references_many` convenience methods.
+
+* Use reference tracking to implement garbage collection.
