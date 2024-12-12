@@ -1,6 +1,6 @@
 require 'rubygems'
 require 'bundler'
-Bundler.require(:default)
+Bundler.require(:default, :test)
 
 SPEC_ROOT = File.expand_path File.dirname(__FILE__)
 Dir["#{SPEC_ROOT}/support/**/*.rb"].each { |f| require f unless File.basename(f) =~ /^_/ }

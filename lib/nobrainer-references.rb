@@ -1,5 +1,6 @@
-require 'active_support/dependencies/autoload'
+# frozen_string_literal: true
 
+require 'active_support/dependencies/autoload'
 require 'nobrainer'
 require 'no_brainer/document/references'
 

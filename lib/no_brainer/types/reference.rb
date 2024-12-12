@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'no_brainer/document'
 
 module NoBrainer
