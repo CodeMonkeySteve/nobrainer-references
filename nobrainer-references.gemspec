@@ -19,7 +19,5 @@ Gem::Specification.new do |s|
 
   s.rdoc_options = ['--charset=UTF-8']
 
-  s.add_dependency 'nobrainer', '~> 0.43'
+  s.add_dependency 'nobrainer', '~> 0.44'
 end
-
-
