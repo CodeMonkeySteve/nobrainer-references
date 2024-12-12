@@ -8,9 +8,9 @@ ActiveRecord provides _associations_ between models as a convenient interface to
 
 ## Installation
 
-Include in your Gemfile:
+Add the Ruby gem to your Gemfile:
 
-    gem 'nobrainer-references', git: 'https://github.com/CodeMonkeySteve/nobrainer-references.git'
+    $ bundle add nobrainer-references
 
 ## Example
 

@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    nobrainer-references (0.1.0)
+    nobrainer-references (1.0.0)
       nobrainer (~> 0.44)
 
 GEM
