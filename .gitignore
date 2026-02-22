@@ -9,3 +9,5 @@
 
 /.idea
 /sandbox
+
+*.gem

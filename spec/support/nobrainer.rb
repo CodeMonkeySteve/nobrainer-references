@@ -12,4 +12,4 @@ end
 NoBrainer.configure do |config|
   config.app_name = 'nobrainer_refs'
   config.environment = :test
-  end
+end
