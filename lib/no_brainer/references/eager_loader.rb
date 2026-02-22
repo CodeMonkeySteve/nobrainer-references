@@ -40,7 +40,7 @@ module NoBrainer::Document::References
 
   module AssociationExt
     def eager_load_association(docs, association_name, criteria=nil)
-      if (field = docs&.first) && (field = field.root_class.fields[association_name.to_sym]) && field_is_reference_type?(field)
+      if (field = docs&.first) && (field = field.class.fields[association_name.to_sym]) && field_is_reference_type?(field)
         NoBrainer::Document::References.eager_load(docs, association_name, field, criteria)
       else
         super
